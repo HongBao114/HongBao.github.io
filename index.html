@@ -1,28 +1,4 @@
-<?php
-// 强制文件下载（避免 PHP 等脚本被直接执行）
-function forceDownload($filePath) {
-    if (file_exists($filePath)) {
-        // 关闭输出缓冲
-        while (ob_get_level()) ob_end_clean();
-        header('Content-Description: File Transfer');
-        header('Content-Type: application/octet-stream');
-        header('Content-Disposition: attachment; filename="' . basename($filePath) . '"');
-        header('Content-Transfer-Encoding: binary');
-        header('Expires: 0');
-        header('Cache-Control: must-revalidate');
-        header('Pragma: public');
-        header('Content-Length: ' . filesize($filePath));
-        readfile($filePath);
-        exit;
-    }
-}
-
-// 如果有下载请求参数 ?download=文件名
-if (isset($_GET['download'])) {
-    $requestedFile = basename($_GET['download']); // 防止目录遍历
-    forceDownload($requestedFile);
-}
-?><!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <title>我的文件下载站</title>
