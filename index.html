@@ -61,61 +61,80 @@
     <div class="file-list">
         <h2>📋 可用文件列表</h2>
         
-        <?php
-        // 扫描当前目录
-        $files = scandir('.');
-        $fileCount = 0;
-
-        // 定义要排除的文件（使用小写比较，不区分大小写）
-        $excludedFiles = array_map('strtolower', ['index.php', 'README.md', 'CNAME', '.htaccess', '.git', '.svn']);
-
-        foreach ($files as $file) {
-            // 跳过 . 和 .. 以及目录
-            if ($file === '.' || $file === '..' || is_dir($file)) {
-                continue;
-            }
-
-            // 检查是否在排除列表（不区分大小写）
-            if (in_array(strtolower($file), $excludedFiles)) {
-                continue;
-            }
-
-            // 确保文件可读
-            if (!is_readable($file)) {
-                continue;
-            }
-
-            $fileCount++;
-            $size = filesize($file);
-            
-            // 格式化文件大小
-            if ($size > 1024 * 1024) {
-                $sizeFormatted = round($size / (1024 * 1024), 2) . ' MB';
-            } else {
-                $sizeFormatted = round($size / 1024, 2) . ' KB';
-            }
-            
-            // 对文件名进行 HTML 转义，防止 XSS
-            $safeFilename = htmlspecialchars($file, ENT_QUOTES, 'UTF-8');
-            // URL 编码文件名，用于下载链接（保留原始文件名用于显示）
-            $urlEncoded = urlencode($file);
-            
-            echo "
-            <div class='file-item'>
-                <div>
-                    <strong>📄 $safeFilename</strong><br>
-                    <small>大小: $sizeFormatted</small>
-                </div>
-                <a href='?download=$urlEncoded' class='download-btn'>下载</a>
-            </div>";
-        }
-
-        if ($fileCount == 0) {
-            echo "<p>暂无文件可下载</p>";
-        } else {
-            echo "<p><small>共找到 $fileCount 个文件</small></p>";
-        }
-        ?>
+        <!-- 此处由 JavaScript 动态生成文件列表 -->
+        <div id="file-items"></div>
+        <div id="file-count"></div>
     </div>
+
+    <script>
+        // 加载 files.json 并生成列表
+        fetch('files.json')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('无法加载文件列表，请确保 files.json 存在');
+                }
+                return response.json();
+            })
+            .then(files => {
+                const container = document.getElementById('file-items');
+                const countContainer = document.getElementById('file-count');
+                let html = '';
+                let fileCount = 0;
+
+                // 过滤掉排除的文件（与原 PHP 逻辑一致）
+                const excluded = ['index.html', 'README.md', 'CNAME', '.htaccess', '.git', '.svn'];
+                const filteredFiles = files.filter(file => {
+                    const name = file.name.toLowerCase();
+                    return !excluded.includes(name) && !file.isDir;
+                });
+
+                filteredFiles.forEach(file => {
+                    // 格式化文件大小（与原 PHP 完全一致）
+                    let sizeFormatted;
+                    const size = file.size;
+                    if (size > 1024 * 1024) {
+                        sizeFormatted = (size / (1024 * 1024)).toFixed(2) + ' MB';
+                    } else {
+                        sizeFormatted = (size / 1024).toFixed(2) + ' KB';
+                    }
+
+                    // 转义文件名，防止 XSS
+                    const safeName = file.name.replace(/[&<>"]/g, function(m) {
+                        if (m === '&') return '&amp;';
+                        if (m === '<') return '&lt;';
+                        if (m === '>') return '&gt;';
+                        if (m === '"') return '&quot;';
+                        return m;
+                    });
+
+                    // URL 编码文件名用于下载链接
+                    const urlEncoded = encodeURIComponent(file.name);
+
+                    html += `
+                        <div class="file-item">
+                            <div>
+                                <strong>📄 ${safeName}</strong><br>
+                                <small>大小: ${sizeFormatted}</small>
+                            </div>
+                            <a href="${urlEncoded}" class="download-btn" download>下载</a>
+                        </div>
+                    `;
+                    fileCount++;
+                });
+
+                container.innerHTML = html;
+
+                // 显示统计信息（与原 PHP 一致）
+                if (fileCount === 0) {
+                    countContainer.innerHTML = '<p>暂无文件可下载</p>';
+                } else {
+                    countContainer.innerHTML = `<p><small>共找到 ${fileCount} 个文件</small></p>`;
+                }
+            })
+            .catch(error => {
+                document.getElementById('file-items').innerHTML = `<p class="error">❌ ${error.message}</p>`;
+                document.getElementById('file-count').innerHTML = '';
+            });
+    </script>
 </body>
 </html>
