@@ -61,13 +61,12 @@
     <div class="file-list">
         <h2>📋 可用文件列表</h2>
         
-        <!-- 此处由 JavaScript 动态生成文件列表 -->
         <div id="file-items"></div>
         <div id="file-count"></div>
     </div>
 
     <script>
-        // 加载 files.json 并生成列表
+
         fetch('files.json')
             .then(response => {
                 if (!response.ok) {
@@ -81,7 +80,7 @@
                 let html = '';
                 let fileCount = 0;
 
-                // 过滤掉排除的文件（与原 PHP 逻辑一致）
+
                 const excluded = ['index.html', 'README.md', 'CNAME', '.htaccess', '.git', '.svn'];
                 const filteredFiles = files.filter(file => {
                     const name = file.name.toLowerCase();
@@ -89,7 +88,7 @@
                 });
 
                 filteredFiles.forEach(file => {
-                    // 格式化文件大小（与原 PHP 完全一致）
+
                     let sizeFormatted;
                     const size = file.size;
                     if (size > 1024 * 1024) {
@@ -98,7 +97,7 @@
                         sizeFormatted = (size / 1024).toFixed(2) + ' KB';
                     }
 
-                    // 转义文件名，防止 XSS
+
                     const safeName = file.name.replace(/[&<>"]/g, function(m) {
                         if (m === '&') return '&amp;';
                         if (m === '<') return '&lt;';
@@ -107,7 +106,7 @@
                         return m;
                     });
 
-                    // URL 编码文件名用于下载链接
+
                     const urlEncoded = encodeURIComponent(file.name);
 
                     html += `
@@ -124,7 +123,7 @@
 
                 container.innerHTML = html;
 
-                // 显示统计信息（与原 PHP 一致）
+
                 if (fileCount === 0) {
                     countContainer.innerHTML = '<p>暂无文件可下载</p>';
                 } else {
